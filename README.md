@@ -1,14 +1,16 @@
 # Student Performance Prediction
 
 ## Overview
+This project aims to predict student performance by analyzing various factors, such as student ability and question difficulty, to determine the likelihood of answering correctly. Through this analysis, we seek to provide a comprehensive understanding of factors influencing student performance and develop predictive models with high accuracy.
 
-This project aims to predict student performance using various machine learning models. The primary goal is to understand the relationships between different features and their impact on the target variable `answered_correctly`. This README provides an overview of the project's methodology, findings, and instructions for usage.
+---
 
 ## Table of Contents
-
 - [Introduction](#introduction)
+- [Assignment Objectives](#assignment-objectives)
 - [Dataset](#dataset)
 - [Feature Engineering](#feature-engineering)
+- [Regularization Techniques](#regularization-techniques)
 - [Model Evaluation](#model-evaluation)
 - [Insights](#insights)
 - [Installation](#installation)
@@ -16,61 +18,105 @@ This project aims to predict student performance using various machine learning 
 - [Contributing](#contributing)
 - [License](#license)
 
-## Introduction
+---
 
-In this project, we utilized machine learning algorithms to predict whether a student answered a question correctly based on several features, including their abilities, the difficulty of the questions, and other contextual factors. By exploring various models, we aimed to identify which features are most significant in predicting student performance.
+## Introduction
+This project applies machine learning to predict if a student will answer a question correctly, using the provided features to assess relationships and identify patterns. By testing multiple models and techniques, we aim to identify which factors most significantly impact student responses, offering insights into student abilities, question difficulty, and other educational variables.
+
+---
+
+## Assignment Objectives
+This project is structured to address the following questions based on student response data:
+
+1. **How did students' ability to answer questions change over time?**
+2. **Did the questions become more or less difficult?**
+3. **Can a model be created to predict if a student will answer a question correctly?**
+4. **Document any additional observations about the data.**
+
+These questions are crucial for understanding student performance trends and the effectiveness of educational assessments.
+
+---
 
 ## Dataset
+The dataset consists of two CSV files representing student response data from the years 2021 and 2022, with each row corresponding to a unique student-question interaction. The dataset contains approximately 95,000 rows, with the following columns:
 
-The dataset contains approximately 95,000 rows and includes the following key features:
+- **student_id**: Unique identifier for each student.
+- **question_id**: Unique identifier for each question.
+- **ability**: The student's skill or ability score, which may change over time.
+- **difficulty**: The level of difficulty for each question, potentially varying by year.
+- **answered_correctly**: Target variable indicating if the answer was correct (1) or incorrect (0).
 
-- `ability`: The student's ability score.
-- `difficulty`: The difficulty level of the question.
-- `year`: The year when the question was posed.
-- `attempts_count`: The number of attempts made by the student on the question.
-- `adjusted_ability`: A normalized ability score for the student.
-- `answered_correctly`: The target variable indicating whether the answer was correct (1) or incorrect (0).
+### Additional Engineered Features
+To enrich the dataset and improve model predictions, we introduced the following features:
 
-### Class Imbalance
-The distribution of the target variable `answered_correctly` is slightly imbalanced, with 48,669 instances of class 1 (correct) and 46,283 instances of class 0 (incorrect).
+- **year**: The year in which the question was answered (2021 or 2022).
+- **correctness_rate**: The rate of correct answers for each student, calculated across all questions.
+- **attempts_count**: The total number of attempts made by each student.
+- **adjusted_ability**: A modified version of the `ability` score, adjusted based on prior attempts and correctness.
+
+These additional features help capture temporal trends, individual question engagement, and adjusted metrics that are more representative of each student’s performance.
+
+---
 
 ## Feature Engineering
+To maximize model effectiveness, we performed feature engineering and evaluated feature significance across different models:
 
-During the feature engineering process, we explored the importance of various features using different models:
-
-- **Logistic Regression**: The features `difficulty` and `ability` were found to have significant importance (both scored around 10 out of 20), while `correctness_rate` showed a lower importance (1 out of 20). The features `attempts_count` and `year` were deemed irrelevant.
+1. **Logistic Regression**: This model revealed that `difficulty` and `ability` were the most impactful features. Other features showed minimal influence, suggesting they may not add predictive value for a linear model.
   
-- **Random Forest**: `ability` had a feature importance of 0.2, while `difficulty` scored 0.09, and `correctness_rate` was around 0.13. Again, `attempts_count` and `year` were unimportant.
+2. **Random Forest**: This ensemble model highlighted `ability` as the strongest predictor, with `difficulty` following behind. The feature importance metrics were consistent with expectations, supporting the role of student ability and question difficulty.
 
-- **XGBoost**: Except for `adjusted_ability`, the feature importances for all other features remained 0, indicating that they had no contribution to the model's predictions.
+3. **XGBoost**: In the case of XGBoost, the feature `adjusted_ability` (a transformed version of `ability`) emerged as the sole contributor to prediction accuracy. This finding helped us streamline our model by focusing on core predictive features.
 
-### Regularization Techniques
+### Data Visualization and Exploratory Analysis
+- **Ability vs. Difficulty**: Scatter plots revealed that as question difficulty increased, the likelihood of correct answers decreased, especially among students with lower ability scores.
+  
+- **Response Patterns by Question**: Most questions had a response count of about 2000, with a noticeable drop in responses for the last four questions (IDs 47–50). This anomaly suggests these questions were either more challenging or impacted by timing constraints.
 
-To mitigate potential overfitting and improve model performance, regularization techniques were implemented:
-- **Logistic Regression**: L2 regularization was applied with a penalty term (`C=1.0`).
-- **Random Forest**: Regularization was achieved by setting `max_depth=10` and `min_samples_split=5`, with `class_weight='balanced'` to handle class imbalance.
-- **XGBoost**: Regularization was enforced through the `max_depth=6` and `scale_pos_weight` calculated based on class distribution.
+- **Student Ability Distribution**: We observed that students with lower abilities were more likely to answer questions incorrectly, particularly for the more difficult questions, aligning with expected performance patterns.
+
+---
+
+## Regularization Techniques
+To mitigate potential overfitting and improve model generalizability, we applied specific regularization techniques based on model type:
+
+- **Logistic Regression**: Applied L2 regularization with a penalty term (C=1.0) to handle potential multicollinearity and increase stability.
+  
+- **Random Forest**: Set hyperparameters to control depth (`max_depth=10`) and sample splits (`min_samples_split=5`), alongside setting `class_weight='balanced'` to address the class imbalance.
+
+- **XGBoost**: Incorporated `scale_pos_weight` (calculated based on class distribution) and set `max_depth=6` to avoid overfitting while handling the slight class imbalance effectively.
+
+These regularization techniques allowed each model to leverage the available data without overfitting to specific trends or patterns.
+
+---
 
 ## Model Evaluation
+Each model was evaluated using 5-fold cross-validation to obtain mean accuracy, as follows:
 
-We evaluated three models using k-fold cross-validation (5-fold) and calculated their mean accuracy:
+- **Logistic Regression**: Achieved an average accuracy of **0.9994**, indicating strong predictive capability with minimal feature engineering.
+  
+- **Random Forest**: Recorded an average accuracy of **0.9999**, making it the most accurate model among those tested.
+  
+- **XGBoost**: Yielded an average accuracy of **0.9989**, still performing well though slightly lower than Random Forest.
 
-- **Logistic Regression Mean Accuracy**: 0.9994
-- **Random Forest Mean Accuracy**: 0.9999
-- **XGBoost Mean Accuracy**: 0.9989
+The models demonstrated high accuracy, reflecting the strength of the features and engineering methods used. However, care was taken to avoid data leakage by focusing only on relevant features and evaluating their importance in detail.
 
-The models performed exceptionally well, indicating a strong ability to predict student performance based on the provided features.
+---
 
 ## Insights
+1. **High Predictive Accuracy**: All models achieved excellent accuracy, reinforcing the high relevance of the engineered features in predicting student performance.
 
-1. **High Predictive Accuracy**: All models achieved very high accuracy, suggesting that the features used are highly indicative of the target variable.
-2. **Feature Importance**: The feature `adjusted_ability` emerged as a crucial predictor across models, while others varied in importance.
-3. **Regularization Effects**: The introduction of regularization techniques helped improve model robustness and mitigated overfitting.
-4. **Class Imbalance Considerations**: Addressing the class imbalance through regularization and balanced weights enhanced the model's ability to generalize.
+2. **Feature Importance**: Across models, `adjusted_ability` consistently emerged as a key predictor, suggesting that a student’s ability relative to question difficulty plays a significant role in their performance.
+
+3. **Regularization and Robustness**: Regularization techniques, particularly in Random Forest and XGBoost, improved model robustness and the handling of slight class imbalance, enhancing generalizability.
+
+4. **Class Imbalance Handling**: By setting balanced weights in Random Forest and adjusting `scale_pos_weight` in XGBoost, the models achieved consistent predictive power across both classes.
+
+5. **Question Engagement and Difficulty Trends**: The low response rates on the last four questions suggested a potential increase in difficulty or constraints that warrant further investigation.
+
+---
 
 ## Installation
-
-To run this project, you need to have Python installed along with the following libraries:
+To run this project, ensure you have Python installed along with the required dependencies:
 
 ```bash
 pip install pandas numpy scikit-learn xgboost seaborn matplotlib
